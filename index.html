@@ -1,0 +1,2373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>STEO — A Gamified App for Personal Development</title>
+
+<!--
+  ============================================================
+  STEO Landing Page — v7
+  ============================================================
+  - Real transparent PNG embedded (no blend mode tricks)
+  - Slow pulsing glow behind avatars
+  - Avatars trail mouse with lag
+  - Click anywhere to drop water ripples that overlap
+  - Custom trailing cursor
+  - v6: About section below the CTAs — Body / Mind / Energy
+    story, seven levels, the system, AI. Scroll-triggered
+    fade-ins, hairline dividers, same type + colour system.
+
+  TO USE IN WIX:
+    Replace the data:image/png;base64,... blob below with your
+    Wix-hosted image URL. Paste this entire file into a full-width
+    Custom HTML / Embed Code element.
+  ============================================================
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&family=Manrope:wght@200;300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-deepest: #02060f;
+    --bg-deep: #050d1f;
+    --bg-mid: #0a1d3d;
+    --ink: #ffffff;
+    --ink-soft: #c5d8f5;
+    --ink-faint: rgba(197, 216, 245, 0.55);
+    --line: rgba(197, 216, 245, 0.35);
+    --line-soft: rgba(197, 216, 245, 0.18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%;
+    min-height: 100vh;
+    background: var(--bg-deepest);
+    color: var(--ink);
+    font-family: 'Manrope', -apple-system, sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    html, body { cursor: none; }
+    a, button, .btn, .privacy, .socials a { cursor: none; }
+  }
+
+  /* ================ BACKGROUND ATMOSPHERE ================ */
+  .stage {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .stage::before {
+    content: '';
+    position: absolute; inset: -10%;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 40%, var(--bg-mid) 0%, var(--bg-deep) 45%, var(--bg-deepest) 80%);
+    z-index: -3;
+    animation: drift 22s ease-in-out infinite alternate;
+  }
+
+  /* SLOW PULSING GLOW BEHIND AVATARS */
+  .glow {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: min(820px, 88vw);
+    height: min(820px, 88vw);
+    transform: translate(-50%, -42%);
+    z-index: -2;
+    pointer-events: none;
+    filter: blur(28px);
+  }
+  .glow::before,
+  .glow::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%,
+      rgba(140, 205, 255, 0.55) 0%,
+      rgba(70, 145, 230, 0.28) 28%,
+      rgba(20, 60, 130, 0.10) 55%,
+      rgba(10, 30, 70, 0) 75%);
+    animation: glow-pulse 9s ease-in-out infinite;
+  }
+  .glow::after {
+    background: radial-gradient(circle at 50% 50%,
+      rgba(190, 225, 255, 0.40) 0%,
+      rgba(100, 180, 255, 0.20) 32%,
+      rgba(20, 60, 130, 0) 65%);
+    animation: glow-pulse 13s ease-in-out infinite reverse;
+    transform: scale(1.18);
+    filter: blur(20px);
+  }
+
+  @keyframes drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(-2%, 2%) scale(1.05); }
+  }
+  @keyframes glow-pulse {
+    0%, 100% { transform: scale(1);     opacity: 0.8; }
+    50%      { transform: scale(1.06);  opacity: 1; }
+  }
+
+  /* film grain */
+  .grain {
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ================ CONTENT ================ */
+  .container {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 7vh 24px 6vh;
+    z-index: 1;
+  }
+
+  .wordmark {
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: clamp(76px, 13vw, 184px);
+    letter-spacing: 0.32em;
+    text-indent: 0.32em;
+    color: var(--ink);
+    line-height: 1;
+    text-shadow:
+      0 0 50px rgba(140, 200, 255, 0.40),
+      0 0 110px rgba(80, 150, 240, 0.20);
+    opacity: 0;
+    animation: rise 1.2s 0.2s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+
+.tagline {
+    margin-top: 26px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 300;
+    font-size: clamp(11px, 1.05vw, 14px);
+    letter-spacing: 0.42em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    text-align: center;
+    text-indent: 0.42em;
+    max-width: 90%;
+    opacity: 0;
+    animation: rise 1.2s 0.55s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+
+  /* ============ AVATAR ============ */
+  .avatar-wrap {
+    position: relative;
+    margin-top: clamp(40px, 6vh, 80px);
+    width: min(720px, 92vw);
+    aspect-ratio: 16 / 11;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    animation: rise 1.4s 0.85s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+
+  .avatar-parallax {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Rendered as a CSS background on a div instead of an <img> so:
+       - "Save image as" doesn't appear in the right-click menu
+       - The image can't be dragged (divs aren't draggable)
+       - The element can't be inspected as a downloadable resource as easily
+     Combined with JS handlers below for full coverage. */
+  .avatar-img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+    display: block;
+    /* Subtle synchronised breath, same 9s rhythm as the background glow */
+    animation: avatar-breathe 9s ease-in-out infinite;
+    transform-origin: center center;
+    will-change: transform, filter;
+    filter: drop-shadow(0 12px 40px rgba(80, 160, 255, 0.35));
+    /* Block selection, drag, callout, context menu */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    pointer-events: none; /* prevents direct interaction with this layer */
+  }
+
+  @keyframes avatar-breathe {
+    0%, 100% {
+      transform: scale(1);
+      filter: drop-shadow(0 12px 40px rgba(80, 160, 255, 0.30));
+    }
+    50% {
+      transform: scale(1.04);
+      filter: drop-shadow(0 16px 56px rgba(120, 190, 255, 0.50));
+    }
+  }
+
+  /* ============ BUTTONS ============ */
+  .actions {
+    margin-top: clamp(32px, 5vh, 56px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 18px;
+    justify-content: center;
+    max-width: 560px;
+    opacity: 0;
+    animation: rise 1.2s 1.15s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  .btn {
+    --btn-pad-y: 16px;
+    --btn-pad-x: 38px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--btn-pad-y) var(--btn-pad-x);
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.025);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--ink);
+    font-family: 'Manrope', sans-serif;
+    font-weight: 400;
+    font-size: 12.5px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    text-decoration: none;
+    overflow: hidden;
+    transition: transform .35s cubic-bezier(.2,.7,.2,1),
+                border-color .4s ease, background .4s ease,
+                box-shadow .4s ease, color .4s ease;
+    min-width: 200px;
+  }
+  .btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
+      rgba(150, 210, 255, 0.35), rgba(150, 210, 255, 0) 60%);
+    opacity: 0;
+    transition: opacity .4s ease;
+    pointer-events: none;
+  }
+  .btn:hover {
+    border-color: rgba(197, 216, 245, 0.8);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow:
+      0 0 0 1px rgba(150, 210, 255, 0.25) inset,
+      0 8px 40px -8px rgba(95, 175, 255, 0.45);
+    transform: translateY(-2px);
+  }
+  .btn:hover::before { opacity: 1; }
+
+  .btn--disabled { opacity: 0.55; }
+  .btn--disabled:hover {
+    border-color: var(--line);
+    background: rgba(255,255,255,0.025);
+    transform: none; box-shadow: none;
+  }
+  .btn--disabled::after {
+    content: 'COMING SOON';
+    position: absolute;
+    bottom: -22px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 9.5px;
+    letter-spacing: 0.4em;
+    color: var(--ink-faint);
+  }
+  .btn--disabled:hover::before { opacity: 0; }
+
+  .btn--full { flex-basis: 100%; max-width: 280px; }
+
+  /* ============ FOOTER META ============ */
+  .meta {
+    margin-top: clamp(48px, 6vh, 72px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    opacity: 0;
+    animation: rise 1.2s 1.45s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+
+  .socials { display: flex; gap: 26px; }
+  .socials a {
+    width: 26px; height: 26px;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    color: var(--ink-soft);
+    transition: color .3s, transform .3s, filter .3s;
+  }
+  .socials a:hover {
+    color: var(--ink);
+    transform: translateY(-2px);
+    filter: drop-shadow(0 0 8px rgba(150, 210, 255, 0.6));
+  }
+  .socials svg { width: 100%; height: 100%; fill: currentColor; }
+
+  .email {
+    font-family: 'Manrope', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.36em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    user-select: text;
+  }
+
+  .privacy {
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 2px;
+    transition: color .3s, border-color .3s;
+  }
+  .privacy:hover { color: var(--ink); border-color: var(--ink); }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============ CLICK RIPPLES (CANVAS) ============ */
+  .ripple-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 50;
+    /* No blend mode — ripples render with normal alpha compositing */
+  }
+
+  /* ============ CUSTOM TRAILING CURSOR (dot only) ============ */
+  .cursor-dot {
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    will-change: transform, width, height, opacity;
+    mix-blend-mode: screen;
+    width: 8px; height: 8px;
+    background: #cfe6ff;
+    box-shadow: 0 0 8px rgba(170, 215, 255, 0.9), 0 0 18px rgba(120, 190, 255, 0.6);
+    transition: width .25s ease, height .25s ease, background .25s ease;
+  }
+  body.cursor-hover .cursor-dot  { width: 13px; height: 13px; }
+  body.cursor-down  .cursor-dot  { width: 5px;  height: 5px;  }
+
+  @media (hover: none), (pointer: coarse) {
+    .cursor-dot { display: none; }
+  }
+
+  /* ============ MOBILE ============ */
+  @media (max-width: 640px) {
+    .wordmark { letter-spacing: 0.26em; text-indent: 0.26em; }
+    .tagline  { letter-spacing: 0.32em; text-indent: 0.32em; font-size: 10px; }
+    .btn { min-width: 0; flex: 1 1 auto; padding: 14px 26px; font-size: 11px; letter-spacing: 0.28em; }
+    .btn--full { flex-basis: 100%; max-width: 100%; }
+    .actions { flex-direction: column; width: 100%; max-width: 320px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .wordmark, .tagline, .avatar-wrap, .actions, .meta { opacity: 1 !important; transform: none !important; }
+  }
+
+  /* ============================================================
+     ABOUT SECTION (v6) — Body / Mind / Energy story
+     Same type system, same colour tokens, hairline dividers,
+     scroll-triggered fade-ins (.reveal -> .reveal.in)
+     ============================================================ */
+  .about {
+    width: min(920px, 100%);
+    margin-top: clamp(110px, 16vh, 190px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .about-block {
+    margin-top: clamp(84px, 12vh, 140px);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .about-block:first-child { margin-top: 0; }
+
+  .hairline {
+    margin-top: clamp(84px, 12vh, 140px);
+    width: min(520px, 72vw);
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent,
+      var(--line-soft) 20%,
+      var(--line) 50%,
+      var(--line-soft) 80%,
+      transparent);
+  }
+
+  .eyebrow {
+    display: block;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.42em;
+    text-indent: 0.42em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .statement {
+    margin-top: 22px;
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: clamp(30px, 4.4vw, 50px);
+    letter-spacing: 0.04em;
+    line-height: 1.18;
+    color: var(--ink);
+    text-shadow: 0 0 40px rgba(140, 200, 255, 0.22);
+  }
+  .lede {
+    margin-top: 26px;
+    max-width: 58ch;
+    font-size: clamp(14.5px, 1.25vw, 16.5px);
+    line-height: 1.85;
+    color: var(--ink-soft);
+  }
+  .kicker {
+    margin-top: 30px;
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: clamp(17px, 1.9vw, 22px);
+    letter-spacing: 0.06em;
+    color: var(--ink);
+  }
+
+  /* three pillars */
+  .pillars {
+    margin-top: clamp(44px, 6vh, 64px);
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 44px 36px;
+  }
+  .pillar {
+    border-top: 1px solid var(--line-soft);
+    padding-top: 26px;
+  }
+  .pillar-num {
+    display: block;
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: 12px;
+    letter-spacing: 0.24em;
+    color: var(--ink-faint);
+  }
+  .pillar h3 {
+    margin-top: 12px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    letter-spacing: 0.34em;
+    text-indent: 0.34em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .pillar p {
+    margin: 16px auto 0;
+    max-width: 30ch;
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: var(--ink-faint);
+  }
+  .cycle {
+    margin-top: clamp(52px, 7vh, 76px);
+    max-width: 44ch;
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: clamp(18px, 2.1vw, 24px);
+    line-height: 1.6;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    text-shadow: 0 0 30px rgba(140, 200, 255, 0.18);
+  }
+  .cycle-sub { margin-top: 18px; }
+
+  /* seven levels */
+  .levels-row {
+    margin-top: clamp(38px, 5vh, 54px);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 18px 34px;
+  }
+  .level {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 400;
+    font-size: 11.5px;
+    letter-spacing: 0.32em;
+    text-indent: 0.32em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    padding-bottom: 8px;
+    border-bottom: 1px solid transparent;
+  }
+  .level:hover {
+    color: var(--ink);
+    border-color: var(--line);
+    text-shadow: 0 0 12px rgba(150, 210, 255, 0.7);
+  }
+  .levels-note {
+    margin-top: 34px;
+    max-width: 52ch;
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--ink-faint);
+  }
+
+  /* the system grid */
+  .sys-grid {
+    margin-top: clamp(44px, 6vh, 64px);
+    width: min(760px, 100%);
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px 48px;
+    text-align: left;
+  }
+  .sys-cell {
+    border-top: 1px solid var(--line-soft);
+    padding-top: 22px;
+  }
+  .sys-cell h3 {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 400;
+    font-size: 11.5px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .sys-cell p {
+    margin-top: 12px;
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: var(--ink-faint);
+  }
+
+  .ai-copy {
+    margin-top: 26px;
+    max-width: 56ch;
+    font-size: clamp(14.5px, 1.25vw, 16.5px);
+    line-height: 1.85;
+    color: var(--ink-soft);
+  }
+  .wp-btn { margin-top: 38px; }
+
+  /* closing */
+  .about-close {
+    margin-top: clamp(110px, 15vh, 170px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .close-row {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 300;
+    font-size: 12px;
+    letter-spacing: 0.5em;
+    text-indent: 0.5em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .close-word {
+    margin-top: 24px;
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: clamp(34px, 5.4vw, 62px);
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    text-shadow:
+      0 0 50px rgba(140, 200, 255, 0.35),
+      0 0 110px rgba(80, 150, 240, 0.18);
+  }
+
+  /* scroll reveals */
+  .reveal {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity .95s ease, transform .95s cubic-bezier(.2,.7,.2,1);
+    transition-delay: var(--d, 0s);
+  }
+  .reveal.in { opacity: 1; transform: none; }
+
+  .levels-row .level {
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity .7s ease calc(var(--i, 0) * 70ms + 120ms),
+      transform .7s cubic-bezier(.2,.7,.2,1) calc(var(--i, 0) * 70ms + 120ms),
+      color .35s ease,
+      border-color .35s ease,
+      text-shadow .35s ease;
+  }
+  .reveal.in .level { opacity: 1; transform: none; }
+
+  @media (max-width: 640px) {
+    .pillars   { grid-template-columns: 1fr; gap: 36px; }
+    .sys-grid  { grid-template-columns: 1fr; gap: 32px; }
+    .levels-row { gap: 16px 24px; }
+    .statement { letter-spacing: 0.03em; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .level { opacity: 1 !important; transform: none !important; }
+  }
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+
+<style>
+  /* ============================================================
+     STEO — v7 CONTENT SYSTEM
+     Everything below the hero. Scoped inside .v7 so the wordmark,
+     tagline, avatars and the three store/workbook buttons above
+     are completely untouched.
+
+     Language rule that governs the whole page:
+       IVORY  = the human side  (what you say, feel, choose)
+       SIGNAL = the machine side (what is measured, detected, modelled)
+     Nothing is coloured for decoration.
+     ============================================================ */
+
+  .v7 {
+    --iv:      #f3eee4;
+    --iv-2:    rgba(243, 238, 228, 0.66);
+    --iv-3:    rgba(243, 238, 228, 0.42);
+    --iv-4:    rgba(243, 238, 228, 0.24);
+    --rule:    rgba(243, 238, 228, 0.14);
+    --rule-2:  rgba(243, 238, 228, 0.07);
+    --sig:     #6fb6ff;
+    --sig-2:   rgba(111, 182, 255, 0.55);
+    --sig-3:   rgba(111, 182, 255, 0.20);
+    --sig-4:   rgba(111, 182, 255, 0.09);
+    --panel:   rgba(255, 255, 255, 0.022);
+    --mono:    'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    position: relative;
+    width: 100%;
+    margin-top: clamp(70px, 11vh, 120px);
+    color: var(--iv);
+    text-align: left;
+  }
+
+  /* ambient field for the lower page — scoped, cannot reach the hero */
+  .v7-field {
+    position: absolute;
+    inset: 8vh -20% auto -20%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 42% 14% at 22% 12%,  rgba(50, 110, 200, 0.13), transparent 70%),
+      radial-gradient(ellipse 38% 12% at 82% 42%,  rgba(60, 130, 220, 0.10), transparent 70%),
+      radial-gradient(ellipse 46% 16% at 30% 76%,  rgba(40,  95, 180, 0.11), transparent 70%);
+    /* no filter: blurring an element that spans the whole ~16000px page
+       forces the browser to composite a ~33 megapixel layer. */
+  }
+
+  .v7-inner {
+    position: relative;
+    width: min(1180px, 100%);
+    margin: 0 auto;
+  }
+
+  /* ------------------------------------------------------------
+     THE SPINE — one continuous signal line threading every
+     section, with a pulse that tracks scroll position.
+     This is the page's signature.
+     ------------------------------------------------------------ */
+  .v7-spine {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 0;
+    width: 1px;
+    background: linear-gradient(180deg,
+      transparent 0,
+      var(--rule) 60px,
+      var(--rule) calc(100% - 160px),
+      transparent 100%);
+    pointer-events: none;
+  }
+  .v7-spine::after {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: var(--pulse, 0px);
+    width: 3px;
+    height: 190px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, transparent, var(--sig) 45%, rgba(180, 220, 255, .95) 55%, transparent);
+    opacity: .75;
+    filter: blur(0.4px);
+    box-shadow: 0 0 18px 2px var(--sig-3);
+  }
+
+  .v7-sec {
+    position: relative;
+    padding-left: clamp(30px, 6vw, 92px);
+    padding-top: clamp(84px, 12vh, 150px);
+  }
+  .v7-sec:first-child { padding-top: 0; }
+
+  /* section node on the spine */
+  .v7-sec > .v7-tag { position: relative; }
+  .v7-sec > .v7-tag::before {
+    content: '';
+    position: absolute;
+    left: calc(-1 * clamp(30px, 6vw, 92px) - 3px);
+    top: 6px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--sig);
+    box-shadow: 0 0 0 4px rgba(2, 6, 15, 1), 0 0 16px 2px var(--sig-2);
+  }
+  .v7-sec > .v7-tag::after {
+    content: '';
+    position: absolute;
+    left: calc(-1 * clamp(30px, 6vw, 92px) + 6px);
+    top: 9px;
+    width: calc(clamp(30px, 6vw, 92px) - 18px);
+    height: 1px;
+    background: linear-gradient(90deg, var(--sig-2), transparent);
+  }
+
+  /* ------------------------------ type ------------------------------ */
+  .v7-tag {
+    display: block;
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 10.5px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--sig);
+  }
+  .v7-h2 {
+    margin-top: 26px;
+    max-width: 20ch;
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: clamp(28px, 3.9vw, 50px);
+    line-height: 1.14;
+    letter-spacing: 0.005em;
+    color: var(--iv);
+  }
+  .v7-h2--wide { max-width: 26ch; }
+  .v7-sub {
+    margin-top: 16px;
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: clamp(17px, 1.7vw, 21px);
+    letter-spacing: 0.02em;
+    color: var(--iv-3);
+  }
+  .v7-lede {
+    margin-top: 30px;
+    max-width: 60ch;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 300;
+    font-size: clamp(15px, 1.22vw, 17px);
+    line-height: 1.9;
+    color: var(--iv-2);
+  }
+  .v7-lede + .v7-lede { margin-top: 20px; }
+  .v7-lede strong {
+    font-weight: 400;
+    color: var(--iv);
+  }
+  .v7-small {
+    margin-top: 14px;
+    max-width: 56ch;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--iv-3);
+  }
+  .v7-note {
+    margin-top: 30px;
+    padding-left: 16px;
+    border-left: 1px solid var(--rule);
+    max-width: 58ch;
+    font-family: var(--mono);
+    font-weight: 300;
+    font-size: 12px;
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+    color: var(--iv-3);
+  }
+
+  /* a stated line the page wants you to remember */
+  .v7-mark {
+    margin-top: clamp(46px, 6vh, 70px);
+    max-width: 30ch;
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: clamp(20px, 2.5vw, 30px);
+    line-height: 1.45;
+    letter-spacing: 0.015em;
+    color: var(--iv);
+    text-shadow: 0 0 44px rgba(160, 205, 255, 0.18);
+  }
+  .v7-steps {
+    margin-top: clamp(40px, 5vh, 60px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .v7-steps span {
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: clamp(18px, 2.1vw, 26px);
+    letter-spacing: 0.02em;
+    color: var(--iv-3);
+    transition: color .6s ease;
+  }
+  .v7-steps span:last-child { color: var(--iv); }
+
+  /* ------------------------------ grids ------------------------------ */
+  .v7-grid {
+    margin-top: clamp(46px, 6vh, 70px);
+    display: grid;
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+  .v7-grid--2 { grid-template-columns: repeat(2, 1fr); }
+  .v7-grid--3 { grid-template-columns: repeat(3, 1fr); }
+  .v7-grid--4 { grid-template-columns: repeat(4, 1fr); }
+  .v7-cell {
+    background: var(--bg-deepest);
+    padding: clamp(22px, 2.6vw, 34px);
+  }
+
+  /* key that names the two kinds of information on the page */
+  .v7-key {
+    margin-top: 26px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 30px;
+    font-family: var(--mono);
+    font-weight: 300;
+    font-size: 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--iv-3);
+  }
+  .v7-key span { display: inline-flex; align-items: center; gap: 10px; }
+  .v7-key i { width: 18px; height: 1px; background: var(--sig); }
+  .v7-key i.is-human { background: rgba(243,238,228,.6); }
+  .v7-cell h3 {
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 10.5px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--iv);
+  }
+  .v7-cell p {
+    margin-top: 16px;
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: var(--iv-3);
+  }
+  .v7-cell .v7-idx {
+    display: block;
+    margin-bottom: 14px;
+    font-family: var(--mono);
+    font-weight: 300;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    color: var(--sig);
+  }
+
+  /* open cards, no box — used where the content is a set, not a table */
+  .v7-set {
+    margin-top: clamp(46px, 6vh, 70px);
+    display: grid;
+    gap: clamp(30px, 4vw, 52px);
+  }
+  .v7-set--1 { grid-template-columns: 1fr; }
+  .v7-set--2 { grid-template-columns: repeat(2, 1fr); }
+  .v7-set--3 { grid-template-columns: repeat(3, 1fr); }
+  .v7-set--4 { grid-template-columns: repeat(4, 1fr); }
+  .v7-item { border-top: 1px solid var(--rule); padding-top: 20px; }
+  .v7-item h3 {
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 10.5px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--iv);
+  }
+  .v7-item p {
+    margin-top: 14px;
+    font-size: 13.5px;
+    line-height: 1.8;
+    color: var(--iv-3);
+  }
+
+  /* ------------------------------ figures ------------------------------ */
+  .v7-fig {
+    margin-top: clamp(48px, 7vh, 84px);
+    width: 100%;
+  }
+  .v7-fig svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .v7-cap {
+    margin-top: 18px;
+    font-family: var(--mono);
+    font-weight: 300;
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--iv-4);
+  }
+
+  .v7-svg-rule   { stroke: rgba(243,238,228,.16); }
+  .v7-svg-sig    { stroke: var(--sig); }
+  .v7-svg-label  { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .16em; fill: rgba(243,238,228,.72); }
+  .v7-svg-label--dim { fill: rgba(243,238,228,.4); }
+  .v7-svg-label--sig { fill: var(--sig); }
+  .v7-svg-title  { font-family: 'Outfit', sans-serif; font-weight: 200; font-size: 19px; letter-spacing: .18em; fill: #f3eee4; }
+
+  .v7-flow {
+    stroke-width: 1;
+    fill: none;
+    stroke-dasharray: 5 9;
+    animation: v7-flow 2.6s linear infinite;
+    animation-play-state: paused;
+  }
+  .in .v7-flow, .reveal.in .v7-flow { animation-play-state: running; }
+  @keyframes v7-flow { to { stroke-dashoffset: -56; } }
+
+  .v7-spin { transform-origin: 450px 365px; animation: v7-spin 26s linear infinite; }
+  @keyframes v7-spin { to { transform: rotate(360deg); } }
+
+  /* ------------------------------ hero handoff (01) ------------------------------ */
+  .v7-open { padding-top: 0; }
+  .v7-open .v7-h2 { max-width: 17ch; font-size: clamp(32px, 4.6vw, 58px); }
+  .v7-actions {
+    margin-top: clamp(38px, 5vh, 54px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 18px;
+    align-items: center;
+  }
+  .v7-scroll {
+    margin-top: clamp(40px, 6vh, 66px);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-family: var(--mono);
+    font-weight: 300;
+    font-size: 10.5px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--iv-4);
+  }
+  .v7-scroll i {
+    display: block;
+    width: 96px; height: 1px;
+    background: linear-gradient(90deg, var(--sig-2), transparent);
+    position: relative;
+    overflow: hidden;
+  }
+  .v7-scroll i::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, var(--sig), transparent);
+    animation: v7-sweep 2.8s ease-in-out infinite;
+  }
+  @keyframes v7-sweep { 0% { transform: translateX(-100%);} 60%,100% { transform: translateX(100%);} }
+
+  /* ------------------------------ device mockups ------------------------------ */
+  .v7-stagegrid {
+    margin-top: clamp(50px, 7vh, 88px);
+    display: grid;
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+    gap: clamp(28px, 4vw, 60px);
+    align-items: center;
+  }
+  .v7-stagegrid--rev { grid-template-columns: minmax(0, 1fr) minmax(0, 300px); }
+  .v7-prompt {
+    margin-top: 20px;
+    border: 1px solid rgba(243,238,228,.10);
+    background: rgba(111,182,255,.05);
+    padding: 14px 14px 16px;
+  }
+  .v7-prompt em {
+    display: block;
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--sig);
+  }
+  .v7-prompt p {
+    margin-top: 9px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 200;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--iv);
+  }
+  .v7-phone {
+    position: relative;
+    width: 100%;
+    max-width: 300px;
+    border-radius: 38px;
+    border: 1px solid var(--rule);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.008)),
+      #04091a;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.03) inset,
+      0 40px 90px -40px rgba(60, 140, 240, .45);
+    padding: 16px 14px 26px;
+    overflow: hidden;
+  }
+  .v7-phone::before {
+    content: '';
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    width: 86px; height: 5px;
+    border-radius: 4px;
+    background: rgba(243,238,228,.12);
+  }
+  .v7-screen { margin-top: 24px; }
+  .v7-screen-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .2em;
+    color: var(--iv-4);
+    text-transform: uppercase;
+  }
+  .v7-meter { margin-top: 18px; }
+  .v7-meter-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--iv-2);
+  }
+  .v7-meter-row b { font-weight: 400; color: var(--sig); letter-spacing: .1em; }
+  .v7-bar {
+    margin-top: 8px;
+    height: 3px;
+    border-radius: 3px;
+    background: rgba(243,238,228,.09);
+    overflow: hidden;
+  }
+  .v7-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, rgba(111,182,255,.35), var(--sig));
+    box-shadow: 0 0 12px var(--sig-3);
+    width: 0;
+    animation: v7-fill 1.8s cubic-bezier(.2,.7,.2,1) forwards;
+    animation-delay: var(--fd, .2s);
+  }
+  @keyframes v7-fill { to { width: var(--w, 60%); } }
+  .v7-tiles {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: rgba(243,238,228,.08);
+    border: 1px solid rgba(243,238,228,.08);
+  }
+  .v7-tile {
+    background: #04091a;
+    padding: 12px 12px 14px;
+  }
+  .v7-tile em {
+    display: block;
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--iv-4);
+  }
+  .v7-tile b {
+    display: block;
+    margin-top: 7px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 200;
+    font-size: 20px;
+    letter-spacing: .04em;
+    color: var(--iv);
+  }
+  .v7-tile b i {
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: .12em;
+    color: var(--iv-4);
+    margin-left: 4px;
+  }
+
+  /* ------------------------------ pattern timeline (05) ------------------------------ */
+  .v7-track {
+    margin-top: clamp(46px, 6vh, 72px);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(20px, 2.6vw, 34px);
+  }
+  .v7-quote {
+    position: relative;
+    padding: 26px 24px 28px;
+    border: 1px solid var(--rule);
+    background: var(--panel);
+  }
+  .v7-quote em {
+    display: block;
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: var(--sig);
+  }
+  .v7-quote p {
+    margin-top: 18px;
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: clamp(15px, 1.5vw, 18px);
+    line-height: 1.6;
+    color: var(--iv);
+  }
+
+  /* ------------------------------ architecture (06) ------------------------------ */
+  .v7-arch { margin-top: clamp(46px, 6vh, 72px); }
+  .v7-layer {
+    border: 1px solid var(--rule);
+    background: var(--panel);
+    padding: clamp(20px, 2.4vw, 30px);
+  }
+  .v7-layer--core {
+    border-color: var(--sig-3);
+    background:
+      linear-gradient(180deg, rgba(111,182,255,.07), rgba(111,182,255,.015));
+    box-shadow: 0 0 60px -20px rgba(111,182,255,.35);
+  }
+  .v7-layer > em {
+    display: block;
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--sig);
+  }
+  .v7-chips {
+    margin-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+  }
+  .v7-chips span {
+    font-family: var(--mono);
+    font-weight: 300;
+    font-size: 10.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--iv-2);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 7px 13px;
+  }
+  .v7-cols {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .v7-link {
+    height: clamp(34px, 4vw, 52px);
+    position: relative;
+  }
+  .v7-link::before {
+    content: '';
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, var(--rule), var(--sig-2));
+  }
+  .v7-link::after {
+    content: '';
+    position: absolute;
+    left: 50%; top: 0;
+    width: 3px; height: 3px;
+    margin-left: -1px;
+    border-radius: 50%;
+    background: var(--sig);
+    box-shadow: 0 0 10px var(--sig);
+    animation: v7-drop 2.4s linear infinite;
+  }
+  @keyframes v7-drop { 0% { top: 0; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+  /* ------------------------------ context stack (08) ------------------------------ */
+  .v7-stack { margin-top: clamp(46px, 6vh, 72px); display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+  .v7-stack-row {
+    background: var(--bg-deepest);
+    display: grid;
+    grid-template-columns: minmax(0, 210px) minmax(0, 1fr);
+    gap: clamp(16px, 2vw, 30px);
+    padding: clamp(20px, 2.4vw, 30px);
+  }
+  .v7-stack-row > em {
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--sig);
+  }
+  .v7-stack-row ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 26px; }
+  .v7-stack-row li {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--iv-2);
+    position: relative;
+    padding-left: 16px;
+  }
+  .v7-stack-row li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 9px;
+    width: 5px; height: 1px;
+    background: var(--sig-2);
+  }
+  .v7-sum {
+    margin-top: 22px;
+    padding: clamp(20px, 2.4vw, 28px);
+    border: 1px solid var(--sig-3);
+    background: linear-gradient(180deg, rgba(111,182,255,.06), transparent);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 200;
+    font-size: clamp(17px, 1.9vw, 23px);
+    letter-spacing: .03em;
+    color: var(--iv);
+  }
+
+  /* ------------------------------ seven areas (11) ------------------------------ */
+  .v7-rail {
+    margin-top: clamp(46px, 6vh, 70px);
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    align-items: end;
+    gap: 6px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 14px;
+  }
+  .v7-rail span {
+    display: block;
+    height: 2px;
+    background: linear-gradient(90deg, var(--sig-3), var(--sig-2));
+    opacity: calc(.32 + var(--i) * .11);
+  }
+  .v7-areas { margin-top: 4px; }
+  .v7-area {
+    display: grid;
+    grid-template-columns: 58px minmax(0, 180px) minmax(0, 1fr);
+    gap: clamp(14px, 2vw, 30px);
+    align-items: baseline;
+    padding: 26px 0;
+    border-bottom: 1px solid var(--rule-2);
+    transition: background .4s ease;
+  }
+  .v7-area:hover { background: rgba(255,255,255,.014); }
+  .v7-area > i {
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .18em;
+    color: var(--sig);
+  }
+  .v7-area > b {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 200;
+    font-size: clamp(19px, 2.1vw, 26px);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--iv);
+  }
+  .v7-area > p { font-size: 13.5px; line-height: 1.8; color: var(--iv-3); }
+
+  /* ------------------------------ progression (14) ------------------------------ */
+  .v7-tiers {
+    margin-top: clamp(46px, 6vh, 70px);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: clamp(12px, 2vw, 26px);
+    align-items: end;
+  }
+  .v7-tier { text-align: center; }
+  .v7-form {
+    position: relative;
+    margin: 0 auto;
+    width: clamp(26px, 3.4vw, 44px);
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(255,255,255,.5), var(--tc, #6fb6ff));
+    filter: blur(.2px);
+    box-shadow: 0 0 26px -4px var(--tc, #6fb6ff), 0 0 60px -10px var(--tc, #6fb6ff);
+    opacity: calc(.42 + var(--i) * .145);
+    animation: v7-breathe 6s ease-in-out infinite;
+    animation-delay: calc(var(--i) * .5s);
+  }
+  @keyframes v7-breathe { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.035); } }
+  .v7-tier em {
+    display: block;
+    margin-top: 20px;
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--iv-3);
+  }
+  .v7-xp {
+    margin-top: clamp(40px, 5vh, 60px);
+    border: 1px solid var(--rule);
+    background: var(--panel);
+    padding: clamp(20px, 2.4vw, 28px);
+  }
+  .v7-xp-top {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--iv-3);
+  }
+  .v7-xp-top b { font-weight: 400; color: var(--sig); }
+  .v7-streak { margin-top: 22px; display: flex; gap: 8px; align-items: center; }
+  .v7-streak i {
+    width: 26px; height: 3px;
+    border-radius: 3px;
+    background: var(--sig);
+    box-shadow: 0 0 12px var(--sig-3);
+    opacity: calc(.45 + var(--i) * .085);
+  }
+  .v7-streak em {
+    margin-left: 12px;
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--iv-4);
+  }
+
+  /* ------------------------------ loop legend (10) ------------------------------ */
+  .v7-legend {
+    margin-top: clamp(40px, 5vh, 62px);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 26px 30px;
+  }
+  .v7-legend div { border-top: 1px solid var(--rule); padding-top: 16px; }
+  .v7-legend h3 {
+    font-family: var(--mono);
+    font-weight: 400;
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--iv);
+  }
+  .v7-legend p { margin-top: 10px; font-size: 13px; line-height: 1.75; color: var(--iv-3); }
+
+  /* ------------------------------ cycle strip (13) ------------------------------ */
+  .v7-cycle {
+    margin-top: clamp(46px, 6vh, 70px);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+  .v7-cycle div {
+    background: var(--bg-deepest);
+    padding: clamp(18px, 2.2vw, 26px);
+    position: relative;
+  }
+  .v7-cycle i {
+    font-style: normal;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .2em;
+    color: var(--sig);
+  }
+  .v7-cycle p {
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-weight: 300;
+    font-size: 11.5px;
+    line-height: 1.7;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--iv-2);
+  }
+  .v7-return {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: var(--iv-4);
+  }
+  .v7-return i {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--sig-2), transparent);
+  }
+
+  /* ------------------------------ privacy (16) ------------------------------ */
+  .v7-shield {
+    margin-top: clamp(46px, 6vh, 70px);
+    display: grid;
+    grid-template-columns: minmax(0, 140px) minmax(0, 1fr);
+    gap: clamp(24px, 3vw, 48px);
+    align-items: start;
+    border: 1px solid var(--rule);
+    background: var(--panel);
+    padding: clamp(26px, 3vw, 44px);
+  }
+  .v7-shield svg { width: 100%; height: auto; }
+
+  /* ------------------------------ close (17) ------------------------------ */
+  .v7-close { padding-bottom: clamp(30px, 5vh, 60px); }
+  .v7-close .v7-h2 { max-width: 18ch; }
+  .v7-signoff {
+    margin-top: clamp(52px, 7vh, 84px);
+    font-family: 'Outfit', 'Manrope', sans-serif;
+    font-weight: 200;
+    font-size: clamp(34px, 5.6vw, 66px);
+    letter-spacing: 0.06em;
+    color: var(--iv);
+    text-shadow:
+      0 0 50px rgba(200, 225, 255, 0.30),
+      0 0 120px rgba(90, 160, 245, 0.18);
+  }
+
+  /* buttons inside the v7 region inherit the hero pill, ivory ink */
+  .v7 .btn { color: var(--iv); border-color: var(--rule); min-width: 0; padding: 15px 34px; }
+  .v7 .btn--quiet { border-color: var(--rule); color: var(--iv-3); }
+
+  .v7 a:focus-visible,
+  .v7 .btn:focus-visible {
+    outline: 1px solid var(--sig);
+    outline-offset: 3px;
+  }
+
+  /* ------------------------------ responsive ------------------------------ */
+  @media (max-width: 1000px) {
+    .v7-grid--4 { grid-template-columns: repeat(2, 1fr); }
+    .v7-set--4  { grid-template-columns: repeat(2, 1fr); }
+    .v7-legend  { grid-template-columns: repeat(2, 1fr); }
+    .v7-cycle   { grid-template-columns: repeat(2, 1fr); }
+    .v7-stagegrid { grid-template-columns: 1fr; justify-items: start; }
+  }
+  @media (max-width: 760px) {
+    /* diagrams stay legible and scroll sideways rather than shrinking
+       to unreadable line-art on a phone */
+    .v7-fig { overflow-x: auto; padding-bottom: 10px; }
+    .v7-fig svg { min-width: 640px; }
+    .v7-svg-label { font-size: 14px; letter-spacing: .12em; }
+    .v7-svg-title { font-size: 26px; }
+    .v7-sec { padding-left: 26px; }
+    .v7-sec > .v7-tag::before { left: -29px; }
+    .v7-sec > .v7-tag::after  { left: -20px; width: 12px; }
+    .v7-grid--2, .v7-grid--3, .v7-grid--4 { grid-template-columns: 1fr; }
+    .v7-set--2, .v7-set--3, .v7-set--4    { grid-template-columns: 1fr; }
+    .v7-track   { grid-template-columns: 1fr; }
+    .v7-cols    { grid-template-columns: 1fr; gap: 10px; }
+    .v7-legend  { grid-template-columns: 1fr; }
+    .v7-cycle   { grid-template-columns: 1fr; }
+    .v7-stack-row { grid-template-columns: 1fr; gap: 14px; }
+    .v7-area    { grid-template-columns: 44px 1fr; }
+    .v7-area > p { grid-column: 2 / -1; }
+    .v7-tiers   { grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .v7-shield  { grid-template-columns: 1fr; }
+    .v7-rail    { gap: 4px; }
+    .v7-h2      { max-width: none; }
+    .v7-phone   { max-width: 260px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .v7-flow, .v7-spin, .v7-form, .v7-link::after,
+    .v7-scroll i::after, .v7-bar span {
+      animation: none !important;
+    }
+    .v7-bar span { width: var(--w, 60%); }
+    .v7-spine::after { display: none; }
+  }
+</style>
+</head>
+
+<body>
+  <main class="stage">
+    <div class="glow"  aria-hidden="true"></div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <div class="container">
+      <h1 class="wordmark">STEO</h1>
+      <p class="tagline">A Gamified App for Personal Development</p>
+
+      <div class="avatar-wrap">
+        <div class="avatar-parallax">
+          <!-- Avatar is hosted in the Wix Media Manager. The /v1/fill/...
+               part of the address is what makes Wix resize it to 1440x810
+               and serve AVIF or WebP instead of the full PNG. Do not
+               shorten the address to the bare .png. -->
+          <img class="avatar-img"
+            src="https://static.wixstatic.com/media/e45b23_45e15bce41224a60a478492ab6585ce0~mv2.png/v1/fill/w_1440,h_810,al_c,q_85,enc_auto/avatar.png"
+            alt="" fetchpriority="high" draggable="false"/>
+        </div>
+      </div>
+
+      <nav class="actions" aria-label="Get the app and resources">
+        <a class="btn" href="https://apps.apple.com/au/app/steo/id6755794579" target="_blank" rel="noopener">Apple Store</a>
+<a class="btn" href="https://play.google.com/store/apps/details?id=app.steo" target="_blank" rel="noopener">Google Play</a>
+<a class="btn btn--full" href="https://www.steo.app/books">Workbooks</a>
+      </nav>
+      <!-- ============================================================
+           STEO — v7 CONTENT
+           An intelligent human-state platform: psychology, AI,
+           behavioural data and wearable biometrics.
+           Everything above this point (wordmark, tagline, avatars,
+           App Store / Google Play / Workbooks) is unchanged.
+           ============================================================ -->
+      <div class="v7">
+        <div class="v7-field" aria-hidden="true"></div>
+
+        <div class="v7-inner">
+          <div class="v7-spine" aria-hidden="true"></div>
+
+          <!-- ==================== 01 · OPENING ==================== -->
+          <section class="v7-sec v7-open" id="steo-open">
+            <span class="v7-tag reveal">Psychology &times; AI &times; Biometrics</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">Understand yourself. Change your state. Change what happens next.</h2>
+            <p class="v7-lede reveal" style="--d:.16s">STEO is an intelligent wellbeing platform that connects psychology, AI and wearable data to help you understand the patterns shaping how you feel, think and behave.</p>
+            <p class="v7-lede reveal" style="--d:.2s">It brings together your reflections, daily behaviour and physiological signals to build a more complete picture of your state &mdash; then turns that information into personalised guidance for change.</p>
+
+            <div class="v7-actions reveal" style="--d:.26s">
+              <a class="btn" href="https://docs.wixstatic.com/ugd/e45b23_a869f8a389424bcf8ecd0a485829532e.pdf" target="_blank" rel="noopener">Read the Conceptual Article</a>
+              <a class="btn btn--quiet" href="https://docs.wixstatic.com/ugd/e45b23_9db2a3aa87994435bf59845038780deb.pdf" target="_blank" rel="noopener">Read the White Paper</a>
+            </div>
+
+            <div class="v7-scroll reveal" style="--d:.34s"><i aria-hidden="true"></i> Explore how it works</div>
+
+            <div class="v7-stagegrid v7-stagegrid--rev reveal" style="--d:.1s">
+              <figure class="v7-fig" style="margin-top:0">
+                <svg viewBox="0 0 700 360" role="img" aria-label="Signals travel from the wearable into the STEO intelligence layer and return to the app as guidance">
+                  <!-- wearable -->
+                  <rect x="44" y="58"  width="76" height="58" rx="15" class="v7-svg-rule" fill="none"/>
+                  <rect x="44" y="208" width="76" height="58" rx="15" class="v7-svg-rule" fill="none"/>
+                  <rect x="30" y="110" width="104" height="104" rx="28" class="v7-svg-rule" fill="none"/>
+                  <rect x="45" y="125" width="74" height="74" rx="20" stroke="rgba(111,182,255,.28)" fill="rgba(111,182,255,.05)"/>
+                  <polyline points="54,162 68,162 74,146 82,180 90,152 98,162 112,162" class="v7-svg-sig" fill="none" stroke-width="1.2"/>
+                  <text x="82" y="300" text-anchor="middle" class="v7-svg-label v7-svg-label--dim">WEARABLE</text>
+
+                  <!-- physiological signals in -->
+                  <text x="250" y="92" text-anchor="middle" class="v7-svg-label v7-svg-label--sig" style="font-size:10px">HR &middot; HRV &middot; SLEEP &middot; ACTIVITY</text>
+                  <path d="M146,162 C240,110 300,110 356,152" class="v7-svg-sig v7-flow" style="animation-delay:0s"/>
+                  <path d="M146,162 C240,148 300,148 356,158" class="v7-svg-sig v7-flow" style="animation-delay:.4s"/>
+                  <path d="M146,162 C240,176 300,176 356,166" class="v7-svg-sig v7-flow" style="animation-delay:.8s"/>
+                  <path d="M146,162 C240,214 300,214 356,172" class="v7-svg-sig v7-flow" style="animation-delay:1.2s"/>
+
+                  <!-- core -->
+                  <circle cx="400" cy="162" r="44" class="v7-svg-rule" fill="none" stroke-dasharray="2 6"/>
+                  <circle cx="400" cy="162" r="26" stroke="rgba(111,182,255,.7)" fill="rgba(111,182,255,.10)"/>
+                  <text x="400" y="166" text-anchor="middle" class="v7-svg-label" style="font-size:10px;letter-spacing:.24em">STEO</text>
+                  <text x="400" y="238" text-anchor="middle" class="v7-svg-label v7-svg-label--dim" style="font-size:10px">INTELLIGENCE LAYER</text>
+
+                  <!-- guidance out -->
+                  <text x="548" y="112" text-anchor="middle" class="v7-svg-label v7-svg-label--dim" style="font-size:10px">INSIGHT &middot; PROMPT &middot; PRACTICE</text>
+                  <path d="M446,156 C520,138 570,148 634,154" stroke="rgba(243,238,228,.55)" class="v7-flow" style="animation-delay:.2s"/>
+                  <path d="M446,168 C520,186 570,176 634,170" stroke="rgba(243,238,228,.55)" class="v7-flow" style="animation-delay:.9s"/>
+                  <path d="M636,148 L652,162 L636,176 Z" fill="rgba(243,238,228,.55)" stroke="none"/>
+
+                  <!-- return -->
+                  <path d="M646,306 L128,306" class="v7-svg-rule v7-flow" style="stroke-dasharray:3 8"/>
+                  <path d="M126,300 L112,306 L126,312 Z" fill="rgba(243,238,228,.35)" stroke="none"/>
+                  <text x="400" y="334" text-anchor="middle" class="v7-svg-label v7-svg-label--dim" style="font-size:10px">AND BACK INTO YOUR DAY</text>
+                </svg>
+              </figure>
+
+              <div class="v7-phone" aria-hidden="true">
+                <div class="v7-screen">
+                  <div class="v7-screen-top"><span>STEO</span><span>Today</span></div>
+                  <div class="v7-meter">
+                    <div class="v7-meter-row"><span>State</span><b>Steady</b></div>
+                    <div class="v7-bar"><span style="--w:66%;--fd:.3s"></span></div>
+                  </div>
+                  <div class="v7-tiles">
+                    <div class="v7-tile"><em>Heart rate</em><b>62<i>bpm</i></b></div>
+                    <div class="v7-tile"><em>HRV</em><b>74<i>ms</i></b></div>
+                    <div class="v7-tile"><em>Sleep</em><b>7:12</b></div>
+                    <div class="v7-tile"><em>Activity</em><b>68</b></div>
+                  </div>
+                  <div class="v7-prompt">
+                    <em>Today's challenge</em>
+                    <p>What did you avoid today, and what were you telling yourself about it?</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ==================== 02 · THE SYSTEM ==================== -->
+          <section class="v7-sec" id="steo-system">
+            <span class="v7-tag reveal">The System</span>
+            <h2 class="v7-h2 v7-h2--wide reveal" style="--d:.08s">Your mind and body are constantly generating information.</h2>
+            <p class="v7-lede reveal" style="--d:.14s">Your heart rate changes. Your HRV changes. Your sleep changes. Your activity changes. Your mood changes. Your thoughts, reactions and behavioural patterns change too.</p>
+            <p class="v7-lede reveal" style="--d:.18s">Most wellbeing platforms look at only one part of this picture. <strong>STEO brings these signals together.</strong> By combining psychological self-reflection, behavioural data, AI pattern recognition and physiological information, STEO helps you understand not only what you are experiencing &mdash; but what may be influencing it.</p>
+
+            <figure class="v7-fig reveal">
+              <svg viewBox="0 0 1000 500" role="img" aria-label="Eight streams of information converging into the STEO intelligence layer">
+                <text x="0" y="48"  class="v7-svg-label">HEART RATE</text>
+                <text x="0" y="106" class="v7-svg-label">HRV</text>
+                <text x="0" y="164" class="v7-svg-label">SLEEP</text>
+                <text x="0" y="222" class="v7-svg-label">ACTIVITY</text>
+                <text x="0" y="280" class="v7-svg-label">MOOD</text>
+                <text x="0" y="338" class="v7-svg-label">REFLECTIONS</text>
+                <text x="0" y="396" class="v7-svg-label">BEHAVIOUR</text>
+                <text x="0" y="454" class="v7-svg-label">AI CONVERSATIONS</text>
+
+                <path d="M200,44  C380,44  520,247 662,247" class="v7-svg-sig v7-flow" style="animation-delay:0s"/>
+                <path d="M200,102 C380,102 520,247 662,247" class="v7-svg-sig v7-flow" style="animation-delay:.3s"/>
+                <path d="M200,160 C380,160 520,247 662,247" class="v7-svg-sig v7-flow" style="animation-delay:.6s"/>
+                <path d="M200,218 C380,218 520,247 662,247" class="v7-svg-sig v7-flow" style="animation-delay:.9s"/>
+                <path d="M200,276 C380,276 520,247 662,247" stroke="rgba(243,238,228,.55)" class="v7-flow" style="animation-delay:1.2s"/>
+                <path d="M200,334 C380,334 520,247 662,247" stroke="rgba(243,238,228,.55)" class="v7-flow" style="animation-delay:1.5s"/>
+                <path d="M200,392 C380,392 520,247 662,247" stroke="rgba(243,238,228,.55)" class="v7-flow" style="animation-delay:1.8s"/>
+                <path d="M200,450 C380,450 520,247 662,247" stroke="rgba(243,238,228,.55)" class="v7-flow" style="animation-delay:2.1s"/>
+
+                <circle cx="720" cy="247" r="58" class="v7-svg-rule" fill="none" stroke-dasharray="2 6"/>
+                <circle cx="720" cy="247" r="34" stroke="rgba(111,182,255,.7)" fill="rgba(111,182,255,.08)"/>
+                <text x="720" y="252" text-anchor="middle" class="v7-svg-label" style="font-size:11px;letter-spacing:.26em">STEO</text>
+                <text x="720" y="338" text-anchor="middle" class="v7-svg-label v7-svg-label--dim" style="font-size:10px">INTELLIGENCE LAYER</text>
+
+                <path d="M778,247 L936,247" stroke="rgba(243,238,228,.55)" class="v7-flow"/>
+                <path d="M938,239 L954,247 L938,255 Z" fill="rgba(243,238,228,.55)" stroke="none"/>
+                <text x="954" y="224" text-anchor="end" class="v7-svg-label">YOUR STATE</text>
+              </svg>
+              <div class="v7-key">
+                <span><i aria-hidden="true"></i> Measured &mdash; physiology and behaviour</span>
+                <span><i class="is-human" aria-hidden="true"></i> Reported &mdash; what you say and notice</span>
+              </div>
+            </figure>
+          </section>
+
+          <!-- ==================== 03 · HOW STEO WORKS ==================== -->
+          <section class="v7-sec" id="steo-how">
+            <span class="v7-tag reveal">How STEO Works</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">One system. Multiple layers of understanding.</h2>
+
+            <figure class="v7-fig reveal" style="--d:.12s">
+              <svg viewBox="0 0 1000 280" role="img" aria-label="Four connected stages: sense, reflect, connect, adapt, running as a continuous loop">
+                <path d="M110,110 L890,110" class="v7-svg-sig v7-flow"/>
+                <circle cx="110" cy="110" r="8" stroke="rgba(111,182,255,.85)" fill="#02060f"/>
+                <circle cx="370" cy="110" r="8" stroke="rgba(111,182,255,.85)" fill="#02060f"/>
+                <circle cx="630" cy="110" r="8" stroke="rgba(111,182,255,.85)" fill="#02060f"/>
+                <circle cx="890" cy="110" r="8" stroke="rgba(111,182,255,.85)" fill="#02060f"/>
+                <text x="110" y="72" text-anchor="middle" class="v7-svg-label">01 &nbsp;SENSE</text>
+                <text x="370" y="72" text-anchor="middle" class="v7-svg-label">02 &nbsp;REFLECT</text>
+                <text x="630" y="72" text-anchor="middle" class="v7-svg-label">03 &nbsp;CONNECT</text>
+                <text x="890" y="72" text-anchor="middle" class="v7-svg-label">04 &nbsp;ADAPT</text>
+                <path d="M890,110 C890,232 720,248 500,248 C280,248 110,232 110,110" class="v7-svg-rule v7-flow" style="stroke-dasharray:3 8"/>
+                <path d="M512,242 L496,248 L512,254 Z" fill="rgba(243,238,228,.35)" stroke="none"/>
+              </svg>
+            </figure>
+
+            <div class="v7-grid v7-grid--2">
+              <div class="v7-cell reveal">
+                <span class="v7-idx">01</span>
+                <h3>Sense &mdash; understand your physical state</h3>
+                <p>STEO can integrate physiological and behavioural signals: heart rate, heart rate variability, sleep, activity and daily mood. These signals provide context for how your body is responding across the day.</p>
+              </div>
+              <div class="v7-cell reveal" style="--d:.1s">
+                <span class="v7-idx">02</span>
+                <h3>Reflect &mdash; understand your internal experience</h3>
+                <p>Through daily challenges, psychological questions, mood check-ins and conversations with STEO, you build a record of emotions, thoughts, reactions, behaviours, recurring situations and personal patterns.</p>
+              </div>
+              <div class="v7-cell reveal" style="--d:.2s">
+                <span class="v7-idx">03</span>
+                <h3>Connect &mdash; AI looks for relationships across your data</h3>
+                <p>STEO's intelligence layer connects information across time rather than treating each interaction as an isolated moment. It can identify recurring themes and relationships between state, thoughts, behaviour and outcomes.</p>
+              </div>
+              <div class="v7-cell reveal" style="--d:.3s">
+                <span class="v7-idx">04</span>
+                <h3>Adapt &mdash; turn insight into action</h3>
+                <p>STEO uses what it learns to provide increasingly relevant prompts, practices and challenges &mdash; shaped by the patterns it has already seen in you.</p>
+              </div>
+            </div>
+
+            <div class="v7-steps reveal">
+              <span>Notice the pattern.</span>
+              <span>Understand the pattern.</span>
+              <span>Interrupt the pattern.</span>
+              <span>Build a different one.</span>
+            </div>
+          </section>
+
+          <!-- ==================== 04 · AI ==================== -->
+          <section class="v7-sec" id="steo-ai">
+            <span class="v7-tag reveal">Intelligence</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">AI that learns how you work.</h2>
+            <p class="v7-sub reveal" style="--d:.12s">Not another chatbot.</p>
+            <p class="v7-lede reveal" style="--d:.18s">STEO AI is designed as an evolving layer of personal intelligence. Instead of responding only to what you say in a single conversation, STEO looks for recurring themes across your reflections, behaviours and experiences. Over time, this creates greater context around the way you respond to different areas of your life.</p>
+
+            <div class="v7-set v7-set--4">
+              <div class="v7-item reveal"><h3>Patterns</h3><p>Recurring themes in your thoughts, emotions and responses.</p></div>
+              <div class="v7-item reveal" style="--d:.1s"><h3>Context</h3><p>What was happening when a particular state or reaction appeared.</p></div>
+              <div class="v7-item reveal" style="--d:.2s"><h3>Connections</h3><p>Relationships between your state, behaviour and reported experience.</p></div>
+              <div class="v7-item reveal" style="--d:.3s"><h3>Change</h3><p>How your patterns evolve over time.</p></div>
+            </div>
+          </section>
+
+          <!-- ==================== 05 · PATTERN RECOGNITION ==================== -->
+          <section class="v7-sec" id="steo-patterns">
+            <span class="v7-tag reveal">Pattern Recognition</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">From conversation to pattern recognition.</h2>
+
+            <div class="v7-track">
+              <div class="v7-quote reveal">
+                <em>Monday</em>
+                <p>&ldquo;I feel overwhelmed when I have too much to do.&rdquo;</p>
+              </div>
+              <div class="v7-quote reveal" style="--d:.12s">
+                <em>Thursday</em>
+                <p>&ldquo;I avoided starting because I didn't know where to begin.&rdquo;</p>
+              </div>
+              <div class="v7-quote reveal" style="--d:.24s">
+                <em>Next week</em>
+                <p>&ldquo;I procrastinated again when the project became complicated.&rdquo;</p>
+              </div>
+            </div>
+
+            <figure class="v7-fig reveal" style="margin-top:0">
+              <svg viewBox="0 0 1000 200" role="img" aria-label="Three separate statements converging into one detected pattern">
+                <path d="M167,0 C167,72 330,72 484,110" class="v7-svg-sig v7-flow"/>
+                <path d="M500,0 L500,110" class="v7-svg-sig v7-flow" style="animation-delay:.4s"/>
+                <path d="M833,0 C833,72 670,72 516,110" class="v7-svg-sig v7-flow" style="animation-delay:.8s"/>
+                <circle cx="500" cy="128" r="17" stroke="rgba(111,182,255,.8)" fill="rgba(111,182,255,.12)"/>
+                <circle cx="500" cy="128" r="5" fill="#6fb6ff" stroke="none"/>
+                <text x="500" y="178" text-anchor="middle" class="v7-svg-label v7-svg-label--sig">RECURRING PATTERN DETECTED</text>
+              </svg>
+            </figure>
+
+            <p class="v7-lede reveal">Individually, these are separate experiences. Together, they may reveal a recurring behavioural pattern. STEO is designed to help surface those repetitions so they become visible.</p>
+            <p class="v7-mark reveal">You cannot consciously change a pattern you cannot see.</p>
+          </section>
+
+          <!-- ==================== 06 · PERSONAL INTELLIGENCE MODEL ==================== -->
+          <section class="v7-sec" id="steo-model">
+            <span class="v7-tag reveal">Personal Intelligence Model</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">STEO builds context over time.</h2>
+
+            <div class="v7-arch">
+              <div class="v7-cols reveal">
+                <div class="v7-layer">
+                  <em>User input</em>
+                  <div class="v7-chips"><span>Reflection</span><span>Mood</span><span>Challenges</span><span>AI conversations</span></div>
+                </div>
+                <div class="v7-layer">
+                  <em>Physiological data</em>
+                  <div class="v7-chips"><span>Heart rate</span><span>HRV</span><span>Sleep</span><span>Activity</span></div>
+                </div>
+                <div class="v7-layer">
+                  <em>Behavioural data</em>
+                  <div class="v7-chips"><span>Habits</span><span>Consistency</span><span>Interactions</span><span>Progress</span></div>
+                </div>
+              </div>
+
+              <div class="v7-link" aria-hidden="true"></div>
+
+              <div class="v7-layer v7-layer--core reveal">
+                <em>STEO intelligence layer</em>
+                <div class="v7-chips"><span>Pattern recognition</span><span>Contextual analysis</span><span>Longitudinal trends</span><span>Personalisation</span></div>
+              </div>
+
+              <div class="v7-link" aria-hidden="true"></div>
+
+              <div class="v7-layer reveal">
+                <em>Personalised experience</em>
+                <div class="v7-chips"><span>Insights</span><span>Questions</span><span>Challenges</span><span>Practices</span><span>Progress</span></div>
+              </div>
+            </div>
+
+            <p class="v7-note reveal">Each pass through the model adds context. Nothing is treated as a single isolated moment.</p>
+          </section>
+
+          <!-- ==================== 07 · WEARABLES ==================== -->
+          <section class="v7-sec" id="steo-wearables">
+            <span class="v7-tag reveal">Wearables</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">Your body is part of the conversation.</h2>
+            <p class="v7-lede reveal" style="--d:.14s">How you feel psychologically and how your body responds are deeply connected. STEO brings physiological data into the self-awareness process, adding another layer of information beyond what you consciously report.</p>
+
+            <figure class="v7-fig reveal">
+              <svg viewBox="0 0 1000 300" role="img" aria-label="The STEO wearable with a live heart-rate trace and biometric readouts">
+                <rect x="94"  y="22"  width="82"  height="62"  rx="18" class="v7-svg-rule" fill="none"/>
+                <rect x="94"  y="218" width="82"  height="62"  rx="18" class="v7-svg-rule" fill="none"/>
+                <rect x="60"  y="76"  width="150" height="150" rx="40" class="v7-svg-rule" fill="none"/>
+                <rect x="78"  y="94"  width="114" height="114" rx="30" stroke="rgba(111,182,255,.28)" fill="rgba(111,182,255,.05)"/>
+                <polyline points="90,150 106,150 114,128 124,174 134,138 146,150 180,150" class="v7-svg-sig" fill="none" stroke-width="1.2"/>
+                <text x="135" y="296" text-anchor="middle" class="v7-svg-label v7-svg-label--dim" style="font-size:10px">STEO WEARABLE</text>
+
+                <text x="278" y="86" class="v7-svg-label v7-svg-label--dim" style="font-size:10px">HR 62 BPM</text>
+                <text x="470" y="86" class="v7-svg-label v7-svg-label--dim" style="font-size:10px">HRV 74 MS</text>
+                <text x="662" y="86" class="v7-svg-label v7-svg-label--dim" style="font-size:10px">SLEEP 7H 12M</text>
+                <text x="866" y="86" class="v7-svg-label v7-svg-label--dim" style="font-size:10px">ACTIVITY 8,410</text>
+
+                <polyline class="v7-svg-sig" fill="none" stroke-width="1.2" points="270,170 320,170 330,152 340,170 356,170 366,206 376,124 386,188 396,170 440,170 490,170 500,152 510,170 526,170 536,206 546,124 556,188 566,170 610,170 660,170 670,152 680,170 696,170 706,206 716,124 726,188 736,170 780,170 830,170 840,152 850,170 866,170 876,206 886,124 896,188 906,170 960,170"/>
+                <line x1="270" y1="240" x2="960" y2="240" class="v7-svg-rule v7-flow" style="stroke-dasharray:3 9"/>
+                <text x="960" y="266" text-anchor="end" class="v7-svg-label v7-svg-label--dim" style="font-size:10px">CONTINUOUS &mdash; ALL DAY</text>
+              </svg>
+            </figure>
+
+            <div class="v7-grid v7-grid--2">
+              <div class="v7-cell reveal">
+                <h3>Heart rate</h3>
+                <p>Heart rate changes dynamically in response to movement, recovery, emotional activation and numerous physiological processes.</p>
+              </div>
+              <div class="v7-cell reveal" style="--d:.1s">
+                <h3>Heart rate variability</h3>
+                <p>HRV reflects variation in the timing between heartbeats and can provide useful information about autonomic regulation, recovery and physiological load.</p>
+              </div>
+              <div class="v7-cell reveal" style="--d:.2s">
+                <h3>Sleep</h3>
+                <p>Sleep duration and quality influence energy, cognition, emotional regulation and recovery.</p>
+              </div>
+              <div class="v7-cell reveal" style="--d:.3s">
+                <h3>Activity</h3>
+                <p>Movement provides additional context for energy expenditure, recovery and changes in daily physiological state.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- ==================== 08 · BIOMETRIC CONTEXT ==================== -->
+          <section class="v7-sec" id="steo-context">
+            <span class="v7-tag reveal">Context</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">Data becomes more useful when it has context.</h2>
+            <p class="v7-lede reveal" style="--d:.14s">A heart-rate number by itself tells you very little about your life. The same is true for HRV, sleep or activity. STEO is designed to interpret these signals alongside your reported experience.</p>
+
+            <div class="v7-stack">
+              <div class="v7-stack-row reveal">
+                <em>Physiology</em>
+                <ul><li>Reduced sleep</li><li>Changed HRV</li><li>Elevated resting heart rate</li></ul>
+              </div>
+              <div class="v7-stack-row reveal" style="--d:.1s">
+                <em>Self-report</em>
+                <ul><li>Low energy</li><li>High emotional activation</li><li>Poor concentration</li></ul>
+              </div>
+              <div class="v7-stack-row reveal" style="--d:.2s">
+                <em>Context</em>
+                <ul><li>Work pressure</li><li>Relationship conflict</li><li>Behavioural changes</li></ul>
+              </div>
+            </div>
+
+            <p class="v7-sum reveal">A more complete view of your state.</p>
+            <p class="v7-lede reveal">STEO can use these combined signals to generate wellness insights and help you recognise changes that may otherwise go unnoticed.</p>
+          </section>
+
+          <!-- ==================== 09 · WELLNESS DASHBOARD ==================== -->
+          <section class="v7-sec" id="steo-wellness">
+            <span class="v7-tag reveal">Wellness Dashboard</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">See your state, not just your stats.</h2>
+            <p class="v7-lede reveal" style="--d:.14s">Instead of presenting streams of disconnected biometric numbers, STEO translates available information into understandable wellness indicators.</p>
+
+            <div class="v7-stagegrid reveal">
+              <div class="v7-phone" aria-hidden="true">
+                <div class="v7-screen">
+                  <div class="v7-screen-top"><span>Wellness</span><span>7-day</span></div>
+                  <div class="v7-meter">
+                    <div class="v7-meter-row"><span>Energy</span><b>74</b></div>
+                    <div class="v7-bar"><span style="--w:74%;--fd:.2s"></span></div>
+                  </div>
+                  <div class="v7-meter">
+                    <div class="v7-meter-row"><span>Anxiety</span><b>28</b></div>
+                    <div class="v7-bar"><span style="--w:28%;--fd:.4s"></span></div>
+                  </div>
+                  <div class="v7-meter">
+                    <div class="v7-meter-row"><span>Mental state</span><b>66</b></div>
+                    <div class="v7-bar"><span style="--w:66%;--fd:.6s"></span></div>
+                  </div>
+                  <div class="v7-tiles">
+                    <div class="v7-tile"><em>Heart rate</em><b>62<i>bpm</i></b></div>
+                    <div class="v7-tile"><em>HRV</em><b>74<i>ms</i></b></div>
+                    <div class="v7-tile"><em>Sleep score</em><b>82</b></div>
+                    <div class="v7-tile"><em>Activity score</em><b>68</b></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="v7-set v7-set--1" style="margin-top:0;gap:30px">
+                <div class="v7-item"><h3>Energy</h3><p>Patterns across sleep, activity, physiological information and reported experience.</p></div>
+                <div class="v7-item"><h3>Anxiety</h3><p>Changes associated with physiological activation combined with psychological self-report and contextual information.</p></div>
+                <div class="v7-item"><h3>Mental state</h3><p>A broader view of your reported emotional state, behaviour and relevant physiological context.</p></div>
+              </div>
+            </div>
+
+            <p class="v7-note reveal">STEO wellness indicators are designed for self-awareness and wellbeing support rather than medical diagnosis.</p>
+          </section>
+
+          <!-- ==================== 10 · THE STEO LOOP ==================== -->
+          <section class="v7-sec" id="steo-loop">
+            <span class="v7-tag reveal">The STEO Loop</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">The pattern behind behaviour.</h2>
+            <p class="v7-lede reveal" style="--d:.14s">Every experience creates another input into what happens next.</p>
+
+            <figure class="v7-fig reveal">
+              <svg viewBox="0 96 900 520" role="img" aria-label="A seven-stage loop: impulse, state, interpretation, choice, action, outcome, new state">
+                <circle cx="450" cy="365" r="195" class="v7-svg-rule" fill="none"/>
+                <circle cx="450" cy="365" r="195" stroke="rgba(111,182,255,.9)" stroke-width="2" fill="none"
+                        stroke-linecap="round" stroke-dasharray="130 1095" class="v7-spin"/>
+
+                <circle cx="450"   cy="170"   r="7" fill="#02060f" stroke="rgba(111,182,255,.9)"/>
+                <circle cx="602.5" cy="243.4" r="7" fill="#02060f" stroke="rgba(111,182,255,.9)"/>
+                <circle cx="640.1" cy="408.4" r="7" fill="#02060f" stroke="rgba(111,182,255,.9)"/>
+                <circle cx="534.6" cy="540.7" r="7" fill="#02060f" stroke="rgba(111,182,255,.9)"/>
+                <circle cx="365.4" cy="540.7" r="7" fill="#02060f" stroke="rgba(111,182,255,.9)"/>
+                <circle cx="259.9" cy="408.4" r="7" fill="#02060f" stroke="rgba(111,182,255,.9)"/>
+                <circle cx="297.5" cy="243.4" r="7" fill="#02060f" stroke="rgba(111,182,255,.9)"/>
+
+                <text x="450"   y="122"   text-anchor="middle" class="v7-svg-label">IMPULSE</text>
+                <text x="635.1" y="216.6" text-anchor="start"  class="v7-svg-label">STATE</text>
+                <text x="682"   y="418"   text-anchor="start"  class="v7-svg-label">INTERPRETATION</text>
+                <text x="553.3" y="579.4" text-anchor="start"  class="v7-svg-label">CHOICE</text>
+                <text x="346.7" y="579.4" text-anchor="end"    class="v7-svg-label">ACTION</text>
+                <text x="218"   y="418"   text-anchor="end"    class="v7-svg-label">OUTCOME</text>
+                <text x="264.9" y="216.6" text-anchor="end"    class="v7-svg-label">NEW STATE</text>
+
+                <text x="450" y="358" text-anchor="middle" class="v7-svg-title">THE LOOP</text>
+                <text x="450" y="390" text-anchor="middle" class="v7-svg-label v7-svg-label--dim" style="font-size:10px">RUNNING CONTINUOUSLY</text>
+              </svg>
+            </figure>
+
+            <div class="v7-legend">
+              <div class="reveal"><h3>Impulse</h3><p>Something happens.</p></div>
+              <div class="reveal" style="--d:.06s"><h3>State</h3><p>Your physiological and emotional state changes.</p></div>
+              <div class="reveal" style="--d:.12s"><h3>Interpretation</h3><p>Your mind gives the experience meaning.</p></div>
+              <div class="reveal" style="--d:.18s"><h3>Choice</h3><p>You respond based on that interpretation.</p></div>
+              <div class="reveal" style="--d:.24s"><h3>Action</h3><p>The choice becomes behaviour.</p></div>
+              <div class="reveal" style="--d:.3s"><h3>Outcome</h3><p>The behaviour creates a result.</p></div>
+              <div class="reveal" style="--d:.36s"><h3>New state</h3><p>The result changes your next internal state, and the loop begins again.</p></div>
+            </div>
+
+            <p class="v7-mark reveal">STEO helps you see the loop while it is happening.</p>
+            <p class="v7-small reveal">Because changing the outcome often begins much earlier than the outcome itself.</p>
+          </section>
+
+          <!-- ==================== 11 · SEVEN AREAS OF LIFE ==================== -->
+          <section class="v7-sec" id="steo-areas">
+            <span class="v7-tag reveal">Seven Areas of Life</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">One system. Your whole life.</h2>
+            <p class="v7-lede reveal" style="--d:.14s">Human patterns rarely exist in isolation. The same underlying beliefs, emotional responses and behavioural tendencies can appear differently across different parts of your life. STEO guides you through seven interconnected areas.</p>
+
+            <div class="v7-rail reveal" aria-hidden="true">
+              <span style="--i:0"></span><span style="--i:1"></span><span style="--i:2"></span><span style="--i:3"></span><span style="--i:4"></span><span style="--i:5"></span><span style="--i:6"></span>
+            </div>
+
+            <div class="v7-areas">
+              <div class="v7-area reveal"><i>01</i><b>Health</b><p>Your relationship with your body, habits and physical wellbeing.</p></div>
+              <div class="v7-area reveal" style="--d:.05s"><i>02</i><b>Sex</b><p>Intimacy, desire, vulnerability and connection.</p></div>
+              <div class="v7-area reveal" style="--d:.1s"><i>03</i><b>Money</b><p>Security, value, scarcity, ambition and behaviour around resources.</p></div>
+              <div class="v7-area reveal" style="--d:.15s"><i>04</i><b>Love</b><p>Attachment, relationships, emotional patterns and connection.</p></div>
+              <div class="v7-area reveal" style="--d:.2s"><i>05</i><b>Power</b><p>Boundaries, confidence, agency and personal influence.</p></div>
+              <div class="v7-area reveal" style="--d:.25s"><i>06</i><b>Purpose</b><p>Meaning, direction, identity and contribution.</p></div>
+              <div class="v7-area reveal" style="--d:.3s"><i>07</i><b>Happiness</b><p>Fulfilment, presence and the way you experience your life.</p></div>
+            </div>
+
+            <p class="v7-lede reveal">Progress through each level reveals different patterns &mdash; while STEO helps you recognise the connections between them.</p>
+          </section>
+
+          <!-- ==================== 12 · DAILY EXPERIENCE ==================== -->
+          <section class="v7-sec" id="steo-daily">
+            <span class="v7-tag reveal">Daily Experience</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">Small inputs. Long-term change.</h2>
+            <p class="v7-lede reveal" style="--d:.14s">Transformation does not happen through one profound insight. It happens through repeated awareness and repeated action.</p>
+
+            <div class="v7-set v7-set--4">
+              <div class="v7-item reveal"><h3>Daily challenges</h3><p>Structured psychological reflection.</p></div>
+              <div class="v7-item reveal" style="--d:.06s"><h3>AI conversations</h3><p>Explore your responses in greater depth.</p></div>
+              <div class="v7-item reveal" style="--d:.12s"><h3>Mood check-ins</h3><p>Track changes in your internal state.</p></div>
+              <div class="v7-item reveal" style="--d:.18s"><h3>Habit tracking</h3><p>Turn intention into repeated behaviour.</p></div>
+              <div class="v7-item reveal" style="--d:.24s"><h3>Meditation &amp; practices</h3><p>Support regulation, attention and reflection.</p></div>
+              <div class="v7-item reveal" style="--d:.3s"><h3>Wearable insights</h3><p>Add physiological context to your experience.</p></div>
+              <div class="v7-item reveal" style="--d:.36s"><h3>Progress &amp; XP</h3><p>Make consistency visible.</p></div>
+            </div>
+          </section>
+
+          <!-- ==================== 13 · INTELLIGENT FEEDBACK LOOP ==================== -->
+          <section class="v7-sec" id="steo-feedback">
+            <span class="v7-tag reveal">Feedback</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">STEO evolves with you.</h2>
+
+            <div class="v7-cycle">
+              <div class="reveal"><i>01</i><p>You experience</p></div>
+              <div class="reveal" style="--d:.05s"><i>02</i><p>STEO collects context</p></div>
+              <div class="reveal" style="--d:.1s"><i>03</i><p>AI identifies patterns</p></div>
+              <div class="reveal" style="--d:.15s"><i>04</i><p>STEO personalises the experience</p></div>
+              <div class="reveal" style="--d:.2s"><i>05</i><p>You take action</p></div>
+              <div class="reveal" style="--d:.25s"><i>06</i><p>Your state changes</p></div>
+              <div class="reveal" style="--d:.3s"><i>07</i><p>New data creates new context</p></div>
+              <div class="reveal" style="--d:.35s"><i>&mdash;</i><p>Return to 01</p></div>
+            </div>
+
+            <div class="v7-return reveal">Loop closes <i aria-hidden="true"></i> and starts again</div>
+
+            <p class="v7-mark reveal">This is not a static wellbeing program. It is a feedback system designed around you.</p>
+          </section>
+
+          <!-- ==================== 14 · GAMIFICATION ==================== -->
+          <section class="v7-sec" id="steo-progress">
+            <span class="v7-tag reveal">Progression</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">Make inner work visible.</h2>
+            <p class="v7-lede reveal" style="--d:.14s">Psychological development is difficult to measure because much of the change happens internally. STEO makes the process tangible.</p>
+
+            <div class="v7-tiers reveal">
+              <div class="v7-tier"><div class="v7-form" style="--i:0;--tc:#8aa0b8;height:54px"></div><em>Tier 0</em></div>
+              <div class="v7-tier"><div class="v7-form" style="--i:1;--tc:#c58b52;height:78px"></div><em>Bronze</em></div>
+              <div class="v7-tier"><div class="v7-form" style="--i:2;--tc:#c9d2dd;height:102px"></div><em>Silver</em></div>
+              <div class="v7-tier"><div class="v7-form" style="--i:3;--tc:#e6c15a;height:126px"></div><em>Gold</em></div>
+              <div class="v7-tier"><div class="v7-form" style="--i:4;--tc:#b9e2ff;height:150px"></div><em>Platinum</em></div>
+            </div>
+
+            <div class="v7-xp reveal">
+              <div class="v7-xp-top"><span>Level 4 &middot; Love</span><b>2,480 XP</b></div>
+              <div class="v7-bar" style="margin-top:14px"><span style="--w:62%;--fd:.3s"></span></div>
+              <div class="v7-streak">
+                <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i><i style="--i:5"></i><i style="--i:6"></i>
+                <em>7-day streak</em>
+              </div>
+            </div>
+
+            <div class="v7-chips reveal" style="margin-top:34px">
+              <span>Complete challenges</span><span>Build streaks</span><span>Earn XP</span>
+              <span>Develop your avatar</span><span>Progress through levels</span><span>Unlock new experiences</span>
+            </div>
+
+            <p class="v7-lede reveal">Your progress becomes something you can see &mdash; not simply something you intend to do.</p>
+          </section>
+
+          <!-- ==================== 15 · SCIENCE & TECHNOLOGY ==================== -->
+          <section class="v7-sec" id="steo-science">
+            <span class="v7-tag reveal">Science &amp; Technology</span>
+            <h2 class="v7-h2 v7-h2--wide reveal" style="--d:.08s">Built at the intersection of human behaviour and technology.</h2>
+
+            <div class="v7-grid v7-grid--3">
+              <div class="v7-cell reveal"><h3>Psychology</h3><p>Understanding cognition, emotion, behaviour and recurring psychological patterns.</p></div>
+              <div class="v7-cell reveal" style="--d:.06s"><h3>Behavioural science</h3><p>Supporting repeated actions and long-term behavioural change.</p></div>
+              <div class="v7-cell reveal" style="--d:.12s"><h3>Psychophysiology</h3><p>Exploring relationships between psychological experience and physiological state.</p></div>
+              <div class="v7-cell reveal" style="--d:.18s"><h3>Artificial intelligence</h3><p>Identifying patterns within complex longitudinal information.</p></div>
+              <div class="v7-cell reveal" style="--d:.24s"><h3>Wearable technology</h3><p>Providing continuous physiological and behavioural context.</p></div>
+              <div class="v7-cell reveal" style="--d:.3s"><h3>Systems thinking</h3><p>Understanding behaviour as part of interconnected feedback loops rather than isolated events.</p></div>
+            </div>
+          </section>
+
+          <!-- ==================== 16 · PRIVACY & RESPONSIBLE AI ==================== -->
+          <section class="v7-sec" id="steo-privacy">
+            <span class="v7-tag reveal">Privacy &amp; Responsible AI</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">Your data. Your experience.</h2>
+
+            <div class="v7-shield reveal">
+              <svg viewBox="0 0 140 140" role="img" aria-label="Concentric boundaries around a single point">
+                <rect x="8"  y="8"  width="124" height="124" rx="34" class="v7-svg-rule" fill="none"/>
+                <rect x="30" y="30" width="80"  height="80"  rx="24" stroke="rgba(111,182,255,.3)" fill="none"/>
+                <circle cx="70" cy="70" r="17" stroke="rgba(111,182,255,.75)" fill="rgba(111,182,255,.08)"/>
+                <circle cx="70" cy="70" r="4"  fill="#6fb6ff" stroke="none"/>
+              </svg>
+              <div>
+                <p class="v7-lede" style="margin-top:0">Personal insight requires trust. STEO is designed around user consent, privacy and transparency. You remain in control of connected health information and the data you choose to share with STEO.</p>
+                <p class="v7-lede">AI is used to support reflection, pattern recognition and personalisation &mdash; not to replace professional healthcare or make medical diagnoses.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- ==================== 17 · CLOSE ==================== -->
+          <section class="v7-sec v7-close" id="steo-close">
+            <span class="v7-tag reveal">Step Into You</span>
+            <h2 class="v7-h2 reveal" style="--d:.08s">There is more information inside you than you realise.</h2>
+            <p class="v7-lede reveal" style="--d:.14s">Your behaviour leaves patterns. Your body produces signals. Your experiences create data. STEO helps you connect them.</p>
+
+            <div class="v7-signoff reveal">Step Into You.</div>
+
+            <div class="v7-actions reveal">
+              <a class="btn" href="https://apps.apple.com/au/app/steo/id6755794579" target="_blank" rel="noopener">Apple Store</a>
+              <a class="btn" href="https://play.google.com/store/apps/details?id=app.steo" target="_blank" rel="noopener">Google Play</a>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <script>
+        /* =========================================================
+           v7 — the spine pulse tracks scroll position.
+           ========================================================= */
+        (function () {
+          var v7 = document.querySelector('.v7');
+          var spine = document.querySelector('.v7-spine');
+          if (v7 && spine && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            var queued = false;
+            var place = function () {
+              queued = false;
+              var r = v7.getBoundingClientRect();
+              var span = r.height - innerHeight;
+              if (span <= 0) return;
+              var p = Math.min(1, Math.max(0, -r.top / span));
+              spine.style.setProperty('--pulse', (p * (r.height - 190)) + 'px');
+            };
+            addEventListener('scroll', function () {
+              if (!queued) { queued = true; requestAnimationFrame(place); }
+            }, { passive: true });
+            addEventListener('resize', place, { passive: true });
+            place();
+          }
+        })();
+      </script>
+
+      <div class="meta">
+        <div class="socials" aria-label="Social media">
+          <a href="https://www.instagram.com/steo.app/?igsh=MTBhNHFodmk1dzY3aw%3D%3D" target="_blank" rel="noopener" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.8.1 1.2.1 1.8.2 2.2.4.6.2 1 .5 1.4.9.4.4.7.8.9 1.4.2.4.4 1 .4 2.2.1 1.2.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 1.2-.2 1.8-.4 2.2-.2.6-.5 1-.9 1.4-.4.4-.8.7-1.4.9-.4.2-1 .4-2.2.4-1.2.1-1.6.1-4.8.1s-3.6 0-4.8-.1c-1.2-.1-1.8-.2-2.2-.4-.6-.2-1-.5-1.4-.9-.4-.4-.7-.8-.9-1.4-.2-.4-.4-1-.4-2.2C2.2 15.6 2.2 15.2 2.2 12s0-3.6.1-4.8c.1-1.2.2-1.8.4-2.2.2-.6.5-1 .9-1.4.4-.4.8-.7 1.4-.9.4-.2 1-.4 2.2-.4 1.2-.1 1.6-.1 4.8-.1m0-2.2C8.7 0 8.3 0 7.1.1 5.8.1 4.9.3 4.1.6c-.8.3-1.5.7-2.2 1.4C1.3 2.7.9 3.3.6 4.1.3 4.9.1 5.8.1 7.1 0 8.3 0 8.7 0 12s0 3.7.1 4.9c.1 1.3.3 2.2.6 3 .3.8.7 1.5 1.4 2.2.7.7 1.3 1.1 2.2 1.4.8.3 1.7.5 3 .6 1.2.1 1.6.1 4.9.1s3.7 0 4.9-.1c1.3-.1 2.2-.3 3-.6.8-.3 1.5-.7 2.2-1.4.7-.7 1.1-1.3 1.4-2.2.3-.8.5-1.7.6-3 .1-1.2.1-1.6.1-4.9s0-3.7-.1-4.9c-.1-1.3-.3-2.2-.6-3-.3-.8-.7-1.5-1.4-2.2C21.3 1.3 20.6.9 19.8.6 19 .3 18.1.1 16.8.1 15.7 0 15.3 0 12 0Zm0 5.8a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4Zm0 10.2a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm6.4-11.9a1.4 1.4 0 1 0 0 2.9 1.4 1.4 0 0 0 0-2.9Z"/></svg>
+          </a>
+          <a href="https://www.tiktok.com/@steo.app?_r=1&_t=ZS-91rHZgYPO5Q" target="_blank" rel="noopener" aria-label="TikTok">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 6.7a5.6 5.6 0 0 1-3.4-1.2 5.6 5.6 0 0 1-2.1-3.6V2h-3.4v13.4a2.9 2.9 0 1 1-2-2.7v-3.5a6.3 6.3 0 1 0 5.4 6.2V8.5a8.9 8.9 0 0 0 5.5 1.9V6.7Z"/></svg>
+          </a>
+          <a href="https://www.youtube.com/@steo-app" target="_blank" rel="noopener" aria-label="YouTube">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.5 6.5a3 3 0 0 0-2.1-2.1C19.5 3.9 12 3.9 12 3.9s-7.5 0-9.4.5A3 3 0 0 0 .5 6.5C0 8.4 0 12 0 12s0 3.6.5 5.5a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.6 24 12 24 12s0-3.6-.5-5.5ZM9.6 15.6V8.4l6.2 3.6-6.2 3.6Z"/></svg>
+          </a>
+        </div>
+
+        <div class="email">info@steo.app</div>
+        <a class="privacy" href="https://privacy.steo.app/" target="_blank" rel="noopener">Privacy Policy</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Click-ripple canvas (full-window overlay) -->
+  <canvas class="ripple-canvas" id="ripples" aria-hidden="true"></canvas>
+
+  <div class="cursor-dot" aria-hidden="true"></div>
+
+  <script>
+    /* =========================================================
+       1) Canvas-based click ripples
+          - Click anywhere (outside buttons/links) to drop a ripple
+          - Each click drops 2 echoed rings 120ms apart (drop sound feel)
+          - Multiple ripples coexist; canvas uses 'lighter' composite
+            so overlapping ripples brighten where they cross
+            (the "bouncing off each other" interference look)
+       ========================================================= */
+    /* =========================================================
+       1) Canvas-based click ripples — gentle still-lake feel
+          - One main ripple + one soft echo per click
+          - Slow expansion, very low opacity
+          - Normal alpha compositing (no blend mode)
+       ========================================================= */
+    (function () {
+      const cvs = document.getElementById('ripples');
+      const ctx = cvs.getContext('2d');
+      let dpr = Math.max(1, window.devicePixelRatio || 1);
+
+      function resize() {
+        dpr = Math.max(1, window.devicePixelRatio || 1);
+        cvs.width  = window.innerWidth  * dpr;
+        cvs.height = window.innerHeight * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      const ripples = [];
+      const MAX_LIFE = 3800;     // ms — slow, drawn-out
+      const MAX_R    = 460;      // px — peak radius
+
+      function drop(x, y, delay = 0, strength = 1) {
+        setTimeout(() => {
+          ripples.push({
+            x, y,
+            t0: performance.now(),
+            life: MAX_LIFE,
+            maxR: MAX_R * (0.9 + Math.random() * 0.2),
+            strength
+          });
+        }, delay);
+      }
+
+      function isInteractive(el) {
+        return el.closest('a, button, .btn, .privacy, input, textarea, select');
+      }
+
+      window.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        if (isInteractive(e.target)) return;
+        drop(e.clientX, e.clientY, 0,   1.0);   // main drop
+        drop(e.clientX, e.clientY, 380, 0.45);  // single soft echo
+      });
+
+      // Touch support
+      window.addEventListener('touchstart', (e) => {
+        if (isInteractive(e.target)) return;
+        const t = e.touches[0]; if (!t) return;
+        drop(t.clientX, t.clientY, 0,   1.0);
+        drop(t.clientX, t.clientY, 380, 0.45);
+      }, { passive: true });
+
+      function render() {
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        const now = performance.now();
+
+        for (let i = ripples.length - 1; i >= 0; i--) {
+          const r = ripples[i];
+          const t = (now - r.t0) / r.life;          // 0 → 1
+          if (t >= 1) { ripples.splice(i, 1); continue; }
+
+          // Slow ease-out expansion
+          const radius = r.maxR * (1 - Math.pow(1 - t, 2.6));
+          // Gentle fade — eases in then drifts out
+          const fade   = Math.sin(t * Math.PI) * (1 - t * 0.3);
+          const alpha  = 0.14 * fade * r.strength;  // peak ~0.14, very low
+
+          // Single soft ring — no halo, no additive blend
+          ctx.beginPath();
+          ctx.arc(r.x, r.y, radius, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(200, 225, 255, ${alpha})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        requestAnimationFrame(render);
+      }
+      render();
+    })();
+
+    /* =========================================================
+       2) Custom cursor — dot only, follows tightly
+       ========================================================= */
+    (function () {
+      const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+      if (!fine) return;
+      const dot = document.querySelector('.cursor-dot');
+      let mx = innerWidth/2, my = innerHeight/2;
+      let dx = mx, dy = my, visible = false;
+
+      addEventListener('mousemove', (e) => {
+        mx = e.clientX; my = e.clientY;
+        if (!visible) { dot.style.opacity = '1'; visible = true; }
+      });
+      addEventListener('mouseleave', () => {
+        dot.style.opacity = '0'; visible = false;
+      });
+      addEventListener('mousedown', () => document.body.classList.add('cursor-down'));
+      addEventListener('mouseup',   () => document.body.classList.remove('cursor-down'));
+
+      document.querySelectorAll('a, .btn, button, .privacy, .socials a').forEach(el => {
+        el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+        el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+      });
+
+      function tick() {
+        dx += (mx - dx) * 0.55;
+        dy += (my - dy) * 0.55;
+        dot.style.transform = `translate(${dx}px, ${dy}px) translate(-50%, -50%)`;
+        requestAnimationFrame(tick);
+      }
+      dot.style.opacity = '0';
+      tick();
+    })();
+
+    /* =========================================================
+       3) (Avatar parallax removed — figures stay completely still)
+       ========================================================= */
+
+    /* =========================================================
+       4) Pointer-following highlight on buttons
+       ========================================================= */
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('mousemove', (e) => {
+        const r = btn.getBoundingClientRect();
+        btn.style.setProperty('--mx', ((e.clientX - r.left) / r.width  * 100) + '%');
+        btn.style.setProperty('--my', ((e.clientY - r.top ) / r.height * 100) + '%');
+      });
+    });
+
+    /* =========================================================
+       5) Scroll-reveal for the About section (v6)
+          - Elements with .reveal fade in when they enter view
+          - Falls back to visible if IntersectionObserver missing
+       ========================================================= */
+    (function () {
+      const els = document.querySelectorAll('.reveal');
+      if (!els.length) return;
+      if (!('IntersectionObserver' in window)) {
+        els.forEach(el => el.classList.add('in'));
+        return;
+      }
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(en => {
+          if (en.isIntersecting) {
+            en.target.classList.add('in');
+            io.unobserve(en.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+      els.forEach(el => io.observe(el));
+    })();
+  </script>
+</body>
+</html>
