@@ -193,6 +193,7 @@
     align-items: center;
     justify-content: center;
   }
+  .avatar-parallax picture { display: block; width: 100%; }
   /* Rendered as a CSS background on a div instead of an <img> so:
        - "Save image as" doesn't appear in the right-click menu
        - The image can't be dragged (divs aren't draggable)
@@ -1568,20 +1569,19 @@
 
       <div class="avatar-wrap">
         <div class="avatar-parallax">
-          <!-- Avatar is hosted in the Wix Media Manager. The /v1/fill/...
-               part of the address is what makes Wix resize it to 1440x810
-               and serve AVIF or WebP instead of the full PNG. Do not
-               shorten the address to the bare .png. -->
-          <img class="avatar-img"
-            src="https://static.wixstatic.com/media/e45b23_45e15bce41224a60a478492ab6585ce0~mv2.png/v1/fill/w_1440,h_810,al_c,q_85,enc_auto/avatar.png"
-            alt="" fetchpriority="high" draggable="false"/>
+          <picture>
+            <source srcset="/assets/steo-avatar.avif" type="image/avif"/>
+            <img class="avatar-img"
+              src="/assets/steo-avatar.webp"
+              alt="" fetchpriority="high" draggable="false"/>
+          </picture>
         </div>
       </div>
 
       <nav class="actions" aria-label="Get the app and resources">
         <a class="btn" href="https://apps.apple.com/au/app/steo/id6755794579" target="_blank" rel="noopener">Apple Store</a>
 <a class="btn" href="https://play.google.com/store/apps/details?id=app.steo" target="_blank" rel="noopener">Google Play</a>
-<a class="btn btn--full" href="https://www.steo.app/books">Workbooks</a>
+<a class="btn btn--full" href="/books/">Workbooks</a>
       </nav>
       <!-- ============================================================
            STEO — v7 CONTENT
